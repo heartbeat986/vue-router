@@ -38,7 +38,7 @@ export default class VueRouter {
   resolveHooks: Array<?NavigationGuard>
   afterHooks: Array<?AfterNavigationHook>
 
-  constructor (options: RouterOptions = {}) {
+  constructor(options: RouterOptions = {}) {
     this.app = null
     this.apps = []
     this.options = options
@@ -75,15 +75,16 @@ export default class VueRouter {
     }
   }
 
-  match (raw: RawLocation, current?: Route, redirectedFrom?: Location): Route {
+  match(raw: RawLocation, current?: Route, redirectedFrom?: Location): Route {
     return this.matcher.match(raw, current, redirectedFrom)
   }
 
-  get currentRoute (): ?Route {
+  get currentRoute(): ?Route {
     return this.history && this.history.current
   }
 
-  init (app: any /* Vue component instance */) {
+  // 组件初始化
+  init(app: any /* Vue component instance */) {
     process.env.NODE_ENV !== 'production' &&
       assert(
         install.installed,
@@ -95,14 +96,17 @@ export default class VueRouter {
 
     // set up app destroyed handler
     // https://github.com/vuejs/vue-router/issues/2639
+    // 只监听一次，触发了一次后就销毁
     app.$once('hook:destroyed', () => {
       // clean out app from this.apps array once destroyed
       const index = this.apps.indexOf(app)
       if (index > -1) this.apps.splice(index, 1)
       // ensure we still have a main app or null if no apps
       // we do not release the router so it can be reused
+      // TODO 搞清楚this.app与this.apps的含义
+      // 如果当前要被销毁的是主app，name就设置apps中第一个为主app,否则为null。
       if (this.app === app) this.app = this.apps[0] || null
-
+      // 如果主app没有了，则history清空监听者，并还原状态
       if (!this.app) this.history.teardown()
     })
 
@@ -144,27 +148,27 @@ export default class VueRouter {
     })
   }
 
-  beforeEach (fn: Function): Function {
+  beforeEach(fn: Function): Function {
     return registerHook(this.beforeHooks, fn)
   }
 
-  beforeResolve (fn: Function): Function {
+  beforeResolve(fn: Function): Function {
     return registerHook(this.resolveHooks, fn)
   }
 
-  afterEach (fn: Function): Function {
+  afterEach(fn: Function): Function {
     return registerHook(this.afterHooks, fn)
   }
 
-  onReady (cb: Function, errorCb?: Function) {
+  onReady(cb: Function, errorCb?: Function) {
     this.history.onReady(cb, errorCb)
   }
 
-  onError (errorCb: Function) {
+  onError(errorCb: Function) {
     this.history.onError(errorCb)
   }
 
-  push (location: RawLocation, onComplete?: Function, onAbort?: Function) {
+  push(location: RawLocation, onComplete?: Function, onAbort?: Function) {
     // $flow-disable-line
     if (!onComplete && !onAbort && typeof Promise !== 'undefined') {
       return new Promise((resolve, reject) => {
@@ -175,7 +179,7 @@ export default class VueRouter {
     }
   }
 
-  replace (location: RawLocation, onComplete?: Function, onAbort?: Function) {
+  replace(location: RawLocation, onComplete?: Function, onAbort?: Function) {
     // $flow-disable-line
     if (!onComplete && !onAbort && typeof Promise !== 'undefined') {
       return new Promise((resolve, reject) => {
@@ -186,19 +190,19 @@ export default class VueRouter {
     }
   }
 
-  go (n: number) {
+  go(n: number) {
     this.history.go(n)
   }
 
-  back () {
+  back() {
     this.go(-1)
   }
 
-  forward () {
+  forward() {
     this.go(1)
   }
 
-  getMatchedComponents (to?: RawLocation | Route): Array<any> {
+  getMatchedComponents(to?: RawLocation | Route): Array<any> {
     const route: any = to
       ? to.matched
         ? to
@@ -217,7 +221,7 @@ export default class VueRouter {
     )
   }
 
-  resolve (
+  resolve(
     to: RawLocation,
     current?: Route,
     append?: boolean
@@ -245,20 +249,23 @@ export default class VueRouter {
     }
   }
 
-  getRoutes () {
+  getRoutes() {
     return this.matcher.getRoutes()
   }
 
-  addRoute (parentOrRoute: string | RouteConfig, route?: RouteConfig) {
+  addRoute(parentOrRoute: string | RouteConfig, route?: RouteConfig) {
     this.matcher.addRoute(parentOrRoute, route)
     if (this.history.current !== START) {
       this.history.transitionTo(this.history.getCurrentLocation())
     }
   }
 
-  addRoutes (routes: Array<RouteConfig>) {
+  addRoutes(routes: Array<RouteConfig>) {
     if (process.env.NODE_ENV !== 'production') {
-      warn(false, 'router.addRoutes() is deprecated and has been removed in Vue Router 4. Use router.addRoute() instead.')
+      warn(
+        false,
+        'router.addRoutes() is deprecated and has been removed in Vue Router 4. Use router.addRoute() instead.'
+      )
     }
     this.matcher.addRoutes(routes)
     if (this.history.current !== START) {
@@ -267,7 +274,7 @@ export default class VueRouter {
   }
 }
 
-function registerHook (list: Array<any>, fn: Function): Function {
+function registerHook(list: Array<any>, fn: Function): Function {
   list.push(fn)
   return () => {
     const i = list.indexOf(fn)
@@ -275,7 +282,7 @@ function registerHook (list: Array<any>, fn: Function): Function {
   }
 }
 
-function createHref (base: string, fullPath: string, mode) {
+function createHref(base: string, fullPath: string, mode) {
   var path = mode === 'hash' ? '#' + fullPath : fullPath
   return base ? cleanPath(base + '/' + path) : path
 }
